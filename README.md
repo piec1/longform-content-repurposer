@@ -36,8 +36,8 @@ Ask me questions first
 ```
 
 ```
-Use Tom Alder as a reference
-[paste content + paste 2-3 of Tom's posts — skill calibrates toward his style while keeping your voice rules]
+Use certain writing samples as reference
+[paste content + paste 2-3 of writing samples — skill calibrates toward his style while keeping your voice rules]
 ```
 
 ## Commands
