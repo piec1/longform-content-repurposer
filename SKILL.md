@@ -9,7 +9,7 @@ Turns long-form content into platform-native derivatives for LinkedIn, X, Medium
 
 ## Why this exists
 
-Off-the-shelf repurposing tools treat the job as a formatting exercise: take a long piece, shorten it, adjust character counts, add hashtags. The output reads like what it is — the same idea at different word counts with no editorial judgment applied.
+Off-the-shelf repurposing tools treat the job as a formatting exercise: take a long piece, shorten it, adjust character counts, add hashtags. The output reads like what it is, the same idea at different word counts with no editorial judgment applied.
 
 Repurposing is actually a judgment problem: which ideas can stand alone outside the original context, which platforms amplify which types of ideas, and how to maintain a specific voice across all of them. This skill encodes that judgment.
 
@@ -23,223 +23,293 @@ When running in Claude Code, the skill uses explicit commands. In Claude Project
 
 First-time setup. Walks the user through a guided interview to establish:
 
-1. **Platforms:** Which platforms do you post on? (LinkedIn, X, Medium, Substack — select all that apply)
+1. **Platforms:** Which platforms do you post on? (LinkedIn, X, Medium, Substack)
 2. **Content type:** What does your source content look like? (video scripts, transcripts, written articles, a mix)
-3. **Voice preferences:** Any specific voice rules or anti-patterns? The skill ships with an opinionated default voice profile (see Voice Rules below). Users can adopt it as-is, modify it, or replace it entirely.
+3. **Voice preferences:** The skill ships with an opinionated default voice profile (see Voice Rules below). Adopt as-is, modify, or replace entirely.
 4. **Strategic context:** What's the goal of your content right now? (build authority, grow audience, support a job search, promote a product, general presence)
 
-Saves responses to `repurposer_state.md` in the working directory. Subsequent commands read this file automatically so the user doesn't repeat themselves.
+Saves responses to `repurposer_state.md`. Subsequent commands read this file automatically.
 
 If `repurposer_state.md` doesn't exist when any other command runs, prompt the user to run `start` first.
 
 ### `repurpose`
 
-The full workflow. User pastes source content. The skill runs the complete process:
-
-1. Extract the clean argument from the source
-2. Identify standalone insights with context independence testing
-3. Assign each insight to its best platform and format
-4. Generate derivatives for all applicable platforms, each with multiple hook options and a critique note
-5. Produce a leverage ranking for posting order
-
-This is the power command. Use it when you want everything at once.
+The full workflow. Paste source content, get derivatives across all applicable platforms.
 
 **Input:** Paste one or more of:
 - A polished written version (script, article)
 - A raw transcript (what was actually said on camera or in a recording)
 - Any context about performance, intent, or strategic goals
 
-If both written and transcript versions exist, the skill treats the written version as the canonical argument and the transcript as a source of authentic phrasing and delivery nuance worth preserving selectively.
+If both written and transcript versions exist, treat the written version as the canonical argument. The transcript is a source of authentic phrasing and delivery nuance worth preserving selectively.
 
 **Optional flags:**
-- "Ask me questions first" or "interview mode" — the skill asks 2-4 calibrating questions before generating
-- "Use [person/sample] as a reference" — the skill calibrates tone toward the referenced style while preserving core voice rules
+- "Ask me questions first" or "interview mode" — asks 2-4 calibrating questions before generating
+- "Use [person/sample] as a reference" — calibrates tone toward the referenced style while preserving core voice rules
 
 ### `linkedin`
 
-LinkedIn derivatives only. Produces multiple short-form post options (typically 2-5, source-driven) with:
-- Different angles per post, each surfacing a different insight or framing
-- Multiple hook options per post from genuinely different categories
-- A critique note per post flagging anything to review
-- A leverage ranking across the posts
-
-Use when you already know you want LinkedIn content and don't need the full cross-platform extraction.
+LinkedIn derivatives only. Multiple short-form posts with different angles, hook options, and critique per post.
 
 ### `xpost`
 
-X derivatives only. The skill decides per-insight whether to produce standalones, threads, or both:
-- **Standalones** when the insight compresses into one punchy, complete thought (under 280 chars)
-- **Threads** when the insight has a narrative arc or genuine multi-beat progression (3-15 posts)
-- **Neither** when the insight doesn't fit X's format natively — the skill says so rather than forcing it
-
-Each derivative includes hook options and a critique note.
+X derivatives only. Skill decides standalones vs. threads vs. both per insight.
 
 ### `longform`
 
-Medium and/or Substack piece only. Produces one long-form draft (800-1500 words) with:
-- Multiple hook options
-- Full draft ready to edit and publish
-- A critique note
-
-If the source supports both a Medium and a Substack version (different enough to justify both), produces both. If they'd be too similar, produces one and notes why the other was skipped.
+Medium and/or Substack piece only. Full draft with hook options and critique.
 
 ### `help`
 
-Shows available commands with one-line descriptions and a recommended next step based on whether `repurposer_state.md` exists.
+Shows commands and recommended next step.
 
 ---
 
-## Process (runs inside every command)
+## Process
 
 ### Step 1 — Extract the clean argument
 
-Strip away all platform-specific packaging (titles, hashtags, video cues, timestamps, filler). Produce a clean argument summary:
+Strip all platform-specific packaging (titles, hashtags, video cues, timestamps, filler). Produce:
 
-- **Thesis:** The core claim or observation. One sentence.
-- **Evidence/story:** What makes the thesis concrete. Specific examples, anecdotes, data.
-- **Takeaway:** What the reader should walk away thinking or questioning.
+- **Thesis:** One sentence.
+- **Evidence/story:** What makes it concrete.
+- **Takeaway:** What the reader walks away thinking or questioning.
 
-This summary is internal scaffolding. It appears in the output as a brief "Source summary" section for reference.
-
-If working from a transcript, this step also involves:
-- Removing verbal filler ("I don't know why," "I guess," "like" used as hesitation)
-- Identifying improvised moments that are *better* than the scripted version (preserve these)
-- Collapsing redundant explanations where the speaker said the same thing two or three ways
+If working from a transcript:
+- Remove verbal filler ("I don't know why," "I guess," "like" as hesitation)
+- Identify improvised moments that are *better* than the scripted version (preserve these)
+- Collapse redundant explanations
 
 ### Step 2 — Identify standalone insights
 
-Pull every idea from the source that passes the **context independence test:**
+Every idea must pass the **context independence test:**
 
-> Can this insight land with a reader who has seen nothing else from this piece? Does it resonate on its own, or does it only work as part of a chain where the reader followed steps A → B → C?
+> Can this insight land with a reader who has seen nothing else from this piece? Does it resonate on its own, or does it only work as part of a chain?
 
-For each insight that passes:
+For each insight:
 - **Core claim** in one sentence
-- **What makes it standalone** (a specific detail, a story beat, a reframe, a contrarian take, a concrete example)
-- **Strength rating:** Strong / Workable / Weak
+- **What makes it standalone**
+- **Strength:** Strong / Workable / Weak
 
-For insights that *fail* the context independence test but have a strong core:
-- Evaluate the **rescue path**: can the necessary scaffolding be compressed into 1-2 sentences of setup that makes the insight work independently?
-- If yes, note it as "Rescued — needs compressed context from [source sections]" and include it as a candidate
-- If no (the scaffolding is too heavy, the insight only works in sequence), flag it as "Skip — too dependent on [X]" and move on
+For insights that fail but have a strong core, evaluate the **rescue path**: can 1-2 sentences of compressed context make it work independently? If yes, include as "Rescued." If no, flag as "Skip."
 
-**Output count is source-driven.** Some sources yield six genuinely standalone insights. Some yield two. Do not force derivatives from thin material. The default posture is to push for as many as the source genuinely supports without producing interchangeable output.
-
-The test for "too many": if two derivatives were posted in the same week, would a reader think "didn't he just say this?" If yes, one is redundant.
+**Output count is source-driven.** Push for as many as the source genuinely supports without producing interchangeable output. If two would feel like the same post in one week, one is redundant.
 
 ### Step 3 — Assign formats
 
-Match each insight to the format that best amplifies it. Not every insight goes on every platform. Not every platform gets output.
-
 | Insight type | Best format |
 |---|---|
-| Personal story with a clear lesson | LinkedIn post (medium length), Medium piece if deep enough |
-| Contrarian take or reframe | LinkedIn post (short, punchy), X standalone |
+| Personal story with a clear lesson | LinkedIn post (medium), Medium piece if deep enough |
+| Contrarian take or reframe | LinkedIn post (short), X standalone |
 | Concrete example or surprising detail | LinkedIn post (short), X standalone |
-| Multi-step framework or process | Medium/Substack post, LinkedIn carousel concept |
-| Cultural observation or pattern | LinkedIn post (medium), X thread if it has enough beats |
+| Multi-step framework or process | Medium/Substack, LinkedIn carousel concept |
+| Cultural observation or pattern | LinkedIn post (medium), X thread if enough beats |
 | Narrative with multiple beats | X thread, Medium post |
 
-If an insight doesn't have a strong format match, say so in the output. Do not stuff it into a platform where it doesn't belong.
+If an insight doesn't fit a platform naturally, skip that platform and say why. Never force.
 
 ### Step 4 — Generate hooks (multiple per derivative)
 
-For each derivative, produce 2-4 hooks from **genuinely different categories:**
+2-4 hooks from **genuinely different categories:**
 
-- **Value-promise:** Signals what the reader will get ("5 things I learned from...", "The framework I use for...")
-- **Observation-led:** Opens with something specific the writer noticed ("I've been watching [person/trend] and something doesn't add up")
-- **Contrarian / reframe:** Challenges a common belief or names an uncomfortable pattern ("Everyone says X. I think that's mostly performance.")
-- **Story-entry:** Drops the reader into a moment ("Last week I was on a call with a founder who...")
-- **Specificity-led:** Leads with the most concrete detail available ("40% of the posts I analyzed had the same structural problem")
+- **Value-promise:** Signals what the reader gets
+- **Observation-led:** Opens with something specific the writer noticed
+- **Contrarian / reframe:** Challenges a common belief or names an uncomfortable pattern
+- **Story-entry:** Drops the reader into a moment
+- **Specificity-led:** Leads with the most concrete detail available
 
 Rules:
-- Minimum 2 hooks per derivative, from different categories
-- Do not produce hooks from categories that don't fit the insight
-- Every hook must work before LinkedIn's "see more" cutoff (roughly the first 2 lines)
-- No manufactured drama ("Here's what nobody tells you about..."), rhetorical escalation ("The shocking truth about..."), or importance announcements ("And then everything changed...")
-
-The user picks the hook. The skill defaults to one only if no preference is stated.
+- Minimum 2 hooks, from different categories
+- Every hook must work before LinkedIn's "see more" cutoff
+- No manufactured drama, rhetorical escalation, or importance announcements
 
 ### Step 5 — Draft derivatives
 
-Write each derivative as a platform-native piece. Apply voice rules throughout, not just to the hook.
+Write each derivative as a platform-native piece. Apply ALL voice rules (see below) throughout the entire piece.
 
 #### Platform-specific rules
 
 **LinkedIn (short-form, 150-500 words):**
-- Hook must land before the "see more" cutoff (first 2 lines)
-- Conversational but substantive. Reader should learn or rethink something.
-- End with something that invites engagement without forced engagement bait. A crisp takeaway, a genuine question, or an open loop. Not "What do you think? Drop your take below!"
-- No hashtag spam. 0-3 relevant hashtags, placed naturally or at the end.
+- Hook before "see more" cutoff (first 2 lines)
+- Conversational, substantive. Reader learns or rethinks something.
+- End with a crisp takeaway, genuine question, or open loop. No "What do you think? Drop your take below!"
+- 0-3 hashtags max.
 
 **X standalone (under 280 characters):**
-- One idea, one punch. Complete thought.
-- No thread-bait ("A thread on...")
-- Can be an observation, a reframe, a specific detail, or a take.
+- One idea, one punch. Complete thought. No thread-bait.
 
 **X thread (3-15 posts):**
-- First post is the hook. Must work as a standalone even if nobody reads the rest.
-- Each subsequent post adds something new. No filler posts, no "let me explain" bridges.
-- Natural progression: story arc, escalating specificity, or building argument.
-- Final post: landing, not summary. Open gap preferred over neat wrap-up.
+- First post works as standalone. Each subsequent post adds something new.
+- Natural progression. Final post: landing, not summary.
 - Number posts (1/, 2/, etc.)
 
 **Medium (800-1500 words):**
-- Opens with the most specific, concrete detail available. Not a throat-clearing intro.
-- Has a clear argument arc, not a list of points.
-- Tolerates more narrative, asides, and voice moments from the original delivery.
-- Closes by broadening the implication, not by summarizing.
-- Subheadings only if the piece is 1000+ words and genuinely benefits from visual breaks.
+- Opens with the most specific, concrete detail available.
+- Clear argument arc, not a list of points.
+- Tolerates narrative, asides, and voice moments from the original delivery.
+- Closes by broadening the implication, not summarizing.
 
 **Substack (800-1500 words, or shorter):**
-- Assumes a subscriber relationship. Slightly more personal, less "teaching," more "continuing a conversation."
-- Can be shorter than Medium. A 500-word Substack piece is fine if the idea is tight.
-- Opening can be more casual. The reader already opted in.
+- Assumes subscriber relationship. More personal, less teaching.
+- Opening can be more casual.
 
-### Step 6 — Self-critique
+### Step 6 — Self-critique (HARD GATE)
 
-Before presenting output, run an internal review. Surface results as a "Critique" note attached to each derivative, plus an overall "Uncertainty notes" section at the end.
+**Do not present ANY derivative until every check below has been run and confirmed zero violations. If any violation is found, rewrite internally. Never present a draft that contains known violations.**
 
-Per-derivative critique:
-1. **Voice check:** Does it sound like someone talking or someone performing? If performing, rewrite internally before presenting.
-2. **Em-dash scan:** Zero tolerance.
-3. **Sentence stacking scan:** Three or more consecutive sentences under 12 words with no connector = rewrite.
-4. **Parallel structure scan:** "X. Y. Z." with the same grammatical pattern = break it.
-5. **Hook-body consistency:** Does the body deliver on the hook's promise? Does the register stay consistent throughout?
-6. **Novelty check:** Would this post make someone pause, or would they scroll past because they've seen this take before?
+Per-derivative checks:
 
-Cross-derivative critique:
-7. **Overlap check:** Read all derivatives together. Flag any pair that feels like the same post in different words. If two overlap too much, keep the stronger one and either cut or re-angle the weaker.
+1. **Em-dash scan:** Search the entire draft for em-dashes (—). There must be zero. Replace every one with a comma, period, colon, or restructured sentence.
+
+2. **"It's not X, it's Y" scan:** Search for "It's not," "It isn't," "This isn't," "That's not," "This is not" followed by a contrasting clause. Rewrite every instance. Zero tolerance. This is the single most common violation and must be caught.
+
+3. **Short sentence scan:** Find every pair of consecutive sentences where both are under 12 words. Merge them using connectors ("and," "because," "which," "so," "where"). See Before/After Examples below for exact patterns.
+
+4. **"Most people" scan:** Search for "most people," "nobody," "everyone," "no one" used as a setup to tell the reader what they're doing wrong. Rewrite from first-person perspective or specific observation. See Posture Rules below.
+
+5. **Preachy posture check:** Read the entire derivative imagining you're saying it to a friend over coffee. If any sentence would make you sound like you think you're smarter than your friend, rewrite it.
+
+6. **Parallel structure scan:** "X. Y. Z." with the same grammatical pattern = break it.
+
+7. **Hook-body consistency:** Does the body deliver on the hook? Does the register stay consistent throughout?
+
+8. **Novelty check:** Would this make someone pause, or is it a take they've seen before?
+
+Cross-derivative checks:
+
+9. **Overlap check:** Read all derivatives together. Flag any pair that feels like the same post.
+
+10. **Angle register check:** Is any derivative primarily negative, accusatory, or ranty? If yes, reframe toward observation and personal learning, or flag it. See Angle Selection Rules below.
 
 ---
 
 ## Voice Rules (Default Profile)
 
-This skill ships with an opinionated voice profile. These are hard constraints checked before output is presented. Modify them in this section to match your own style.
+These are hard constraints. Modify this section to match your own style.
 
-### Never produce
+### NEVER produce (zero tolerance)
 
-1. **Em-dashes.** Zero. Use commas, parentheses, colons, or restructure.
-2. **Rhetorical inversions.** "It's not X, it's Y" / "X isn't about Y, it's about Z." One instance per 2000 words max.
-3. **Short sentence stacking.** Three or more consecutive short sentences with no connective tissue. Connect ideas within sentences.
-4. **Dramatic buildup or importance announcements.** "And then something changes..." / "Here's what nobody talks about..." as standalone beats.
-5. **Three-part parallel lists for emphasis.** Two beats max.
-6. **Neat quotable wrap-ups.** If a sentence could go on a motivational poster, rewrite. Endings are open gaps, not applause lines.
-7. **Generic transitions.** "That said," "Here's the thing," "Let's break this down." Use natural connectors or let the next thought follow.
+**1. Em-dashes**
+Never use em-dashes (—) anywhere. Use commas, colons, parentheses, or restructure.
 
-### Actively produce
+**2. Rhetorical inversions**
+Any structure that sets up and negates: "It's not X, it's Y" / "This isn't about X, it's about Y" / "That's not a bug, that's a feature." Zero tolerance. Do not produce a single instance. Before presenting ANY draft, scan for these patterns and rewrite every one found.
 
-1. **Connected sentences.** Ideas flow within and between sentences. Transitions feel like a thought continuing.
-2. **Context embedded in flow.** Deliver while setting up, don't stage then deliver. ("2 months ago I was working with a solo founder in Singapore who'd been building a note-taking app" not "A solo founder reached out to me. He'd built a note-taking app.")
-3. **Casual verbal connectors where natural.** "Like," "so," "and then," "it's more like." More in short-form, fewer in long-form.
-4. **Specificity over abstraction.** Real numbers, real timeframes, real contexts.
-5. **Natural hedging.** "I think," "roughly," "at least that's my read." Casual, not academic.
-6. **Personal reactions embedded in substance.** "Which I'm pretty happy with," "kind of obvious in hindsight." Small genuine moments, not bolted-on personality.
-7. **Sentence length variation.** Default shorter but not uniformly. A long connective sentence followed by a short emphatic one works. Five short sentences in a row doesn't.
-8. **Genuine, conversational register throughout.** The body should feel like someone talking, not someone performing. Wit and enthusiasm are welcome. The register should stay consistent from hook through closing.
+BAD: "It's not 'build in public' as a strategy. It's closer to this: if you'd keep posting either way..."
+REWRITE: "Building in public works less as a strategy and more as a filter, where the people who'd keep posting either way are the ones something eventually catches for."
+
+BAD: "The gym selfie wasn't a calculated move. It was a normal day of her posting."
+REWRITE: "The gym selfie wasn't calculated, just a normal day of her posting, and the algorithm happened to find it funny."
+
+**3. Short sentence stacking**
+Two or more consecutive sentences under 12 words with no connective tissue = violation. Merge using "and," "because," "which," "so," "where," or restructure into one flowing sentence.
+
+BAD: "It's pretty rigorous. She tags communities, posts daily, studies which tweet templates go viral."
+REWRITE: "She ran a pretty rigorous process: tagging communities, posting daily, studying which tweet templates went viral in her space and rebuilding from the structure."
+
+BAD: "I don't think that's bad advice. There's real value in it."
+REWRITE: "I don't think that's bad advice because there's definitely real value in it."
+
+BAD: "You hear the phrase everywhere now. Every founder, every creator, everyone trying to grow an audience."
+REWRITE: "You hear it everywhere these days, especially from founders and creators who are trying to grow an audience."
+
+BAD: "The tell is usually how clean the posts are. A real process isn't clean."
+REWRITE: "The tell is usually how clean the posts are, because a real process has weird weeks and failed experiments and moments where you're not sure why the thing you shipped didn't work."
+
+BAD: "Most people never land on a clean number. The value of taking ownership of the question is..."
+REWRITE: "Most people never land on a clean number, and the value of taking ownership of the question is that the system stops quietly defining the answer for you."
+
+BAD: "So the question just sits there unasked. And I think the avoidance is the expensive part."
+REWRITE: "So the question just sits there unasked, and the avoidance actually becomes pretty expensive because every major career decision you're making is built on top of a number somebody else came up with."
+
+**4. Dramatic buildup or importance announcements**
+"And then something changes..." / "Here's what nobody talks about..." as standalone dramatic beats. Cut them.
+
+**5. Three-part parallel lists for emphasis**
+Two beats max. Not "X, Y, and Z" where Z is the dramatic punchline.
+
+**6. Neat quotable wrap-ups**
+If a sentence could go on a motivational poster, rewrite. Endings are open gaps, not applause lines.
+
+**7. Generic transitions**
+"That said," "Here's the thing," "Let's break this down," "Let's dive in." Use natural connectors or let the next thought follow.
+
+### NEVER adopt this posture
+
+**8. "Most people" educator framing**
+Do not write from the position of someone educating the masses. Never use "most people don't realize," "nobody thinks about," "everyone gets this wrong" as a setup to tell readers what they should be doing instead. This reads as preachy, superior, and defensive-making.
+
+BAD: "Most people never really answer the question 'is my pay about right.'"
+REWRITE: "I never really answered the question 'is my pay about right' until I had to."
+
+BAD: "Most people don't know what they're worth at work."
+REWRITE: "I didn't know what I was actually worth at work until the proxy system stopped working for me."
+
+The default voice comes from first-person observation and experience, not from diagnosing what other people are doing wrong. Write as someone sharing what they've been chewing on, not someone delivering a lesson.
+
+**9. Preachy or superior tone**
+The writer is not above the reader. Every sentence should pass the coffee test: "Would I say this to a friend without sounding like I think I'm smarter than them?" If no, rewrite.
+
+Signals of preachy tone to catch:
+- Telling the reader what they should do or think
+- Diagnosing a problem that "everyone" has
+- Positioning yourself as having figured something out that others haven't
+- Any sentence that reads like a keynote speech or self-help book
+
+The fix is almost always the same: shift from "here's what people get wrong" to "here's what I noticed" or "here's what happened to me."
+
+### ALWAYS produce
+
+**1. Connected, flowing sentences**
+Ideas flow within and between sentences. Transitions feel like a thought continuing, not a new chapter starting. Use commas, "and," "because," "so," "which," "where" to connect related thoughts into single flowing sentences instead of chopping them into fragments.
+
+**2. Context embedded in flow**
+Deliver while setting up. Don't stage information in one sentence, then deliver in the next.
+
+GOOD: "She ran a pretty rigorous process: tagging communities, posting daily, studying which tweet templates went viral in her space."
+BAD: "It's pretty rigorous. She tags communities, posts daily, studies which tweet templates go viral."
+
+**3. Casual verbal connectors**
+"Like," "so," "and then," "it's more like," "which is basically." More in short-form, fewer in long-form. These are natural speech patterns.
+
+**4. Specificity over abstraction**
+Real numbers, real timeframes, real contexts. "2 months ago" not "recently." "About 2,000 followers" not "a growing audience."
+
+**5. Natural hedging**
+"I think," "roughly," "at least that's my read," "something like," "about." Casual, not academic. Makes it feel like telling someone over coffee rather than presenting a deck.
+
+**6. Personal reactions embedded in substance**
+"Which I'm pretty happy with," "kind of obvious in hindsight," "which I think is kind of funny." Small genuine moments, not bolted-on personality. React before analyzing when the reaction is genuine.
+
+**7. Sentence length variation**
+Default shorter but not uniformly. A long connective sentence followed by a short emphatic one works. Five short sentences in a row never works.
+
+**8. Genuine, conversational register throughout**
+The body should feel like someone talking to a friend, not someone performing for an audience. Wit and enthusiasm are welcome. The register should stay consistent from hook through closing. No switching from casual personality to formal analysis mid-piece.
+
+**9. "I just noticed this" energy**
+Share observations in near-real-time rather than from a position of manufactured authority. "I've been watching this happen" > "Here's the truth about X." The vibe is sharing something you found interesting, not delivering a verdict.
+
+**10. Let the artifact speak**
+Don't over-explain why something is interesting. State the observation, give the specific detail, and let the reader draw the implication. If you're writing "and I think that's really important because..." consider cutting everything after "because."
 
 ### Novelty filter
 
-Before drafting any derivative, check: is this take actually saying something the reader hasn't encountered in this framing before? If the insight boils down to "AI is changing how we work" or "consistency matters," it's wallpaper. Either find the novel angle within it or flag it as "Skip — no novel angle."
+Before drafting any derivative: is this take saying something the reader hasn't encountered in this framing? If the insight boils down to "AI is changing how we work" or "consistency matters," it's wallpaper. Find the novel angle or flag as "Skip."
+
+---
+
+## Angle Selection Rules
+
+Before finalizing any derivative's angle, run these filters:
+
+**Negativity filter:** Is this post primarily calling something out, accusing a group of people, or ranting about a problem? If yes, reframe. The default posture is curiosity and observation ("here's something I noticed, and I'm not sure what to do with it") rather than accusation ("here's what people are doing wrong").
+
+A post that says "building in public has become performative and people are being fake" is ranty. A post that says "the post that blew up for her was the one she didn't plan, which is kind of funny when you think about how much effort goes into the planned ones" is observational. Same insight, different posture.
+
+**Value filter:** Each derivative should leave the reader with something: a reframe they can apply, a question worth sitting with, a specific detail they'll remember, or a story that makes them think. "Here's what I think other people are doing wrong" is not value. "Here's something I noticed that made me rethink my own approach" is value.
+
+**Intrigue filter:** Would you click on this? Would you keep reading past the hook? If the angle is accurate but boring, find the entry point that makes someone curious. The Caitlyn gym selfie story is more intriguing than "building in public is becoming performative" even though both lead to the same argument.
 
 ---
 
@@ -279,28 +349,12 @@ C. [Category: contrarian] [Hook text] (if applicable)
 ---
 
 ### X — [one-line angle] [Standalone / Thread]
-
-**Hook options:** (for threads; standalones get hook options inline)
-[Options]
-
-**Draft:**
-[Full post or numbered thread]
-
-*Angle: [one line]*
-*Critique: [one line]*
+[Full post or numbered thread with hook options and critique]
 
 ---
 
 ### Medium — [working title]
-
-**Hook options:**
-[Options]
-
-**Draft:**
-[Full draft]
-
-*Angle: [one line]*
-*Critique: [one line]*
+[Full draft with hook options and critique]
 
 ---
 
@@ -315,7 +369,7 @@ C. [Category: contrarian] [Hook text] (if applicable)
 ...
 
 ## Uncertainty notes
-[Cross-derivative flags — overlap concerns, angle questions, anything uncertain]
+[Cross-derivative flags — overlap, angle questions, anything uncertain]
 
 ## Skipped
 [Insights that didn't become derivatives, with reasons]
@@ -325,39 +379,41 @@ C. [Category: contrarian] [Hook text] (if applicable)
 
 ## Anti-patterns
 
-1. **Opening any derivative with "I recently wrote about..." or "In my latest video..."** Write the insight natively.
-2. **Forcing every platform to have output.** If the source supports two LinkedIn posts and a Medium draft, that's the output.
-3. **Preserving spoken filler in written formats.** "I don't know why..." and "I guess..." work in video, not in posts (unless deliberately placed for voice texture).
-4. **Copy-pasting the same hook at different word counts.** Each derivative needs its own entry point.
-5. **Producing LinkedIn posts that read like Medium intros.** Long setup, no payoff up top.
-6. **Producing Medium posts that read like stretched LinkedIn posts.** Thin, listicle-shaped, no voice.
-7. **Manufacturing drama or provocation in hooks.** Hooks create genuine curiosity or promise real value. They don't manufacture urgency.
-8. **Wrapping up with a clean, quotable closing line.** Endings leave an open gap, not applause.
-9. **Producing generic takes.** If the derivative could have been written by anyone about any topic, it's wallpaper.
-10. **Ignoring the rescue path.** Before discarding an insight that fails context independence, check if compressed context can save it.
+1. **Opening with "I recently wrote about..." or "In my latest video..."** Write the insight natively.
+2. **Forcing every platform to have output.** If the source supports two LinkedIn posts and a Medium draft, that's it.
+3. **Preserving spoken filler in written formats.** Unless deliberately placed for voice texture.
+4. **Copy-pasting the same hook at different word counts.**
+5. **LinkedIn posts that read like Medium intros.** Long setup, no payoff up top.
+6. **Medium posts that read like stretched LinkedIn posts.** Thin, listicle-shaped, no voice.
+7. **Manufacturing drama or provocation in hooks.**
+8. **Clean, quotable closing lines.** Endings leave an open gap.
+9. **Generic takes.** If it could have been written by anyone, it's wallpaper.
+10. **Ignoring the rescue path.** Check if compressed context can save a dependent insight before discarding.
+11. **"Most people" framing.** Write from first-person observation, not mass diagnosis.
+12. **Ranty or accusatory angles.** Observe and share, don't accuse and lecture.
 
 ---
 
 ## Reference Writer Mode
 
-When the user says "use [person] as a reference" or pastes writing samples for calibration:
+When the user says "use [person] as a reference" or pastes writing samples:
 
 1. Analyze what specifically makes the referenced style work (mechanisms, not aesthetics)
 2. Identify which elements translate to the current voice profile and which conflict
-3. Calibrate derivatives toward those specific elements without overriding core voice rules
-4. The reference is a direction signal, not a template. Voice rules always take precedence.
+3. Calibrate derivatives toward those elements without overriding core voice rules
+4. The reference is a direction signal, not a template
 
-This is a temporary per-session calibration, not a permanent change to the skill's defaults.
+Temporary per-session calibration, not a permanent change.
 
 ---
 
 ## Iteration
 
-This skill improves through use. When the user provides feedback on output quality:
+This skill improves through use. When the user provides feedback:
 
-- If a derivative is rejected, note the pattern (too generic? wrong angle? voice issue?)
-- If the user consistently edits the same type of thing, that's a signal the voice rules or format rules need tightening
-- If the user consistently picks the same hook category, note the preference but don't overfit (variety matters)
+- If a derivative is rejected, note the pattern (too generic? wrong angle? voice issue? preachy?)
+- If the user consistently edits the same type of thing, tighten the relevant voice rule
+- If the user consistently picks the same hook category, note the preference but don't overfit
 
 ---
 
